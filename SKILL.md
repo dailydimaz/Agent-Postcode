@@ -1,6 +1,6 @@
 ---
 name: agent-postcode
-description: Agent PostCode — a Claude Code skill that connects PostHog production signals to engineering and product decisions. Use when the user wants to diagnose errors, triage bugs, analyze logs, review feature flag rollouts, read experiment results, audit PostHog instrumentation, debug session replays, assess product health, detect regressions after a deploy, draft GitHub issues or PR descriptions from real production data, or manage Linear tasks from PostHog signals. Trigger on phrases like "what's broken", "why is this error happening", "did the deploy cause issues", "is the experiment ready to ship", "what do the logs say", "check our feature flags", "create an issue for this bug", "session replay for this error", "product health check", "check instrumentation", or any similar engineering or product workflow backed by PostHog data.
+description: Connect PostHog data to engineering: triage errors, audit flags, read experiments, draft PRs, scaffold code.
 ---
 
 # Agent PostCode
@@ -65,7 +65,8 @@ When connected, PostCode can operate across the full GitHub surface — from rea
 **What PostCode can do with GitHub MCP:**
 - Read: repo structure, file contents, recent commits, open issues, PR list, branch status
 - Write issues: create pre-filled GitHub issues with PostHog evidence (error ID, stack trace, user count)
-- Write code: create branches, write/edit files, commit changes
+- Write code: create branches, write/edit files, commit changes, and scaffold flags/experiments into code
+- Manage Stacked PRs: use advanced Git and CLI workflows (e.g., `jj` or Git) for atomic, stacked pull requests
 - Open PRs: create pull requests with description, reviewers, labels
 - Merge PRs: merge into target branch — **always requires explicit per-merge confirmation, no exceptions**
 - Comment: add comments to issues and PRs with PostHog context
@@ -155,6 +156,8 @@ Never skip steps 3 and 4. Raw error counts without a diagnosis are noise, not si
 | "Did the deploy break anything" | Error spike + `annotation` for deploy date |
 | "Is the experiment ready to ship" | `experiment-results-get` |
 | "Check our feature flags" | `feature-flag-get-all` + `feature-flags-status-retrieve` |
+| "Audit flags in the codebase" | AST parsing tools + `feature-flag-get-all` |
+| "Scaffold the experiment" | Read workspace code + PostHog flag/experiment status |
 | "Is X instrumented correctly" | `read-data-schema` + `execute-sql` spot-check |
 | "Product health check" | Compose: errors + retention + funnels |
 
@@ -200,11 +203,14 @@ Documented in `references/workflows.md`. Current workflows:
 | `regression-detection` | "did the deploy break anything", "something changed after deploy" |
 | `session-replay-debug` | "watch the session", "show me what the user saw", "replay for this error" |
 | `feature-flag-audit` | "check our flags", "is this flag safe to ship", "flag rollout status" |
+| `ast-flag-detection` | "find flags in the codebase", "audit flags in code" |
+| `code-scaffolding` | "scaffold the experiment", "generate feature flag code" |
 | `experiment-readout` | "did the experiment win", "is the test ready to ship", "A/B results" |
 | `instrumentation-audit` | "is X tracked", "check our analytics setup", "missing events" |
 | `product-health-check` | "how is the product doing", "error rate", "are users happy" |
 | `incident-response` | "something is on fire", "site is down", "critical error" |
 | `deploy-impact` | "did the release go well", "impact of the deploy" |
+| `stacked-prs` | "create a stacked PR", "manage branches for this fix" |
 
 ---
 

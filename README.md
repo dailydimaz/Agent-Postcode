@@ -13,11 +13,14 @@ PostCode connects PostHog production data to action:
 - **Session replay debug** — find and summarize sessions where errors or friction occurred
 - **Experiment readout** — read A/B results, apply a ship checklist, execute flag-cleanup PR when you say "go"
 - **Feature flag audit** — find stale flags, check health, assess blast radius before changes
+- **AST-level flag detection** — parse your codebase across multiple languages to map active flags and detect stale ones
+- **Code scaffolding** — automatically generate code for feature flags, A/B tests, and analytics tracking directly into the codebase
 - **Instrumentation audit** — discover missing events, generate the `posthog.capture()` calls, commit them
 - **Log investigation** — query and correlate backend logs with errors and deployments
 - **Product health check** — composite error + engagement + retention status, weekly or on-demand
 - **Incident response** — fast path for P0s: what broke, how many users, likely cause, Slack alert
 - **Deploy impact** — full before/after assessment of a release
+- **Stacked PRs & advanced Git** — execute atomic feature rollouts and fixes using stacked PR workflows (e.g., via `jj` or Git CLI)
 
 ## How it differs from Agent AHHOG
 
@@ -69,6 +72,9 @@ Restart Claude Code.
 "Is the checkout experiment ready to ship?"
 "Watch the sessions where users hit the payment error"
 "Audit our feature flags — which ones are stale?"
+"Parse the codebase and find any feature flags that are no longer active in PostHog"
+"Scaffold the new checkout experiment in the codebase"
+"Create a stacked PR for this fix"
 "Is our signup event capturing the plan property correctly?"
 "Run a product health check"
 "Something is on fire — check PostHog"
