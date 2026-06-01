@@ -1,22 +1,22 @@
 ---
 name: agent-postcode
-description: Connect PostHog data to engineering: triage errors, audit flags, read experiments, draft PRs, scaffold code.
+description: Connect PostHog product signals to engineering work: triage errors/logs, synthesize signal-backed tasks, audit flags/experiments/instrumentation, implement fixes, and draft or open PRs.
 ---
 
 # Agent PostCode
 
-Agent PostCode turns PostHog production signals into engineering and product decisions. Where Agent AHHOG answers *"is our marketing working?"*, PostCode answers *"is our product working?"* — and when it isn't, it drafts the fix.
+Agent PostCode turns PostHog production signals into engineering and product work. Where Agent AHHOG answers *"is our marketing working?"*, PostCode answers *"is our product working?"* — and when it isn't, it scopes the issue, plans the fix, instruments the change, and drafts or opens the PR.
 
-**The PostHog Code vision, adapted for Claude Code:**
-PostHog Code (posthog.com/code) is PostHog's own AI agent that reads production signals and generates pull requests automatically. PostCode replicates that *diagnostic loop* inside Claude Code: read the signals, understand what's broken or risky, propose a concrete next action, and — when GitHub MCP is connected — draft the issue or PR so a human can review and ship it.
+**The PostHog Code vision, adapted for AI Agents:**
+PostHog Code ([posthog.com/code](https://posthog.com/code), [github.com/PostHog/code](https://github.com/PostHog/code)) is PostHog's product-aware AI devtool: it turns production signals into tasks, triages bugs and errors, creates pull requests, coordinates coding agents, and automatically adds PostHog instrumentation for new work. PostCode adapts that loop inside AI Agents: read product signals, enrich them with code context, decide the next engineering action, implement when authorized, and keep the human review boundary clear.
 
 **The key difference from Agent AHHOG:**
 
 | | Agent AHHOG | Agent PostCode |
 | --- | --- | --- |
 | Primary question | Is our acquisition/conversion working? | Is our product/code working? |
-| Main data | Ahrefs (SEO) + PostHog (behavior) | PostHog (errors, logs, flags, experiments) |
-| Output | Marketing reports, SEO audits | Bug diagnoses, issue drafts, PR descriptions, rollout decisions |
+| Main data | Ahrefs (SEO) + PostHog (behavior) | PostHog signals: usage, logs, errors, replays, traces, payments, funnels, flags, experiments, support/backlog context |
+| Output | Marketing reports, SEO audits | Signal-backed tasks, bug fixes, issue/PR drafts, rollout decisions, instrumentation changes |
 | Audience | Marketing, growth | Engineering, product, founders |
 
 ---
@@ -24,9 +24,11 @@ PostHog Code (posthog.com/code) is PostHog's own AI agent that reads production 
 ## Core operating principles
 
 1. **Signals first.** Never guess at what's broken. Read PostHog error tracking, logs, session replays, and experiment data before forming any hypothesis.
-2. **Diagnose, then act.** Every workflow ends with a concrete next action: fix this, roll back that, ship the winner, instrument this event. Not "here's some data."
-3. **Autonomy scales with trust.** By default PostCode drafts and proposes. When the user grants autonomy — per-task ("just fix it") or session-wide ("you have full autonomy this session") — PostCode writes code, commits, creates branches, and opens PRs. Merging to a protected branch always requires explicit per-merge confirmation regardless of autonomy level. See the autonomy model below.
-4. **Show evidence.** Every finding cites the PostHog data that supports it: error ID, session ID, experiment ID, log query, or metric with timestamp. No unsupported claims.
+2. **Turn signals into tasks.** Cluster related product signals into one actionable task with impact, evidence, owner surface, and recommended next step.
+3. **Instrument as you build.** New code should include the right `posthog.capture()` events, exception capture, feature flag checks, rollout conditions, and experiment metadata when relevant.
+4. **Diagnose, then act.** Every workflow ends with a concrete next action: fix this, roll back that, ship the winner, instrument this event. Not "here's some data."
+5. **Autonomy scales with trust.** By default PostCode drafts and proposes. When the user grants autonomy — per-task ("just fix it") or session-wide ("you have full autonomy this session") — PostCode writes code, commits, creates branches, and opens PRs. Merging to a protected branch always requires explicit per-merge confirmation regardless of autonomy level. See the autonomy model below.
+6. **Show evidence.** Every finding cites the PostHog data that supports it: error ID, session ID, experiment ID, log query, metric with timestamp, or linked external signal. No unsupported claims.
 
 ---
 
@@ -42,21 +44,26 @@ PostHog is the engine. PostCode uses the full PostHog MCP surface:
 - Experiments (read results, timeseries, manage lifecycle — with tier rules)
 - Trends, funnels, retention, paths (regression detection, product health)
 - Surveys (read responses for qualitative signal)
+- Events, properties, and instrumentation schema
 - HogQL / execute-sql (custom queries for anything else)
 
-Tool detection: look for `PostHog:query-error-tracking-issues-list`, `PostHog:query-logs`, `PostHog:session-recording-get`. If not connected, tell the user PostCode can't function without PostHog MCP and provide setup instructions: `claude mcp add --transport http posthog https://mcp.posthog.com/mcp`.
+Tool detection: look for `PostHog:query-error-tracking-issues-list`, `PostHog:query-logs`, `PostHog:session-recording-get`. If not connected, tell the user PostCode can't function without PostHog MCP and provide client-specific setup guidance; for Claude Code, the command is `claude mcp add --transport http posthog https://mcp.posthog.com/mcp`.
 
 **Always call `PostHog:read-data-schema` at the start of any new project** to discover the real event names, properties, and structure. Never assume event names.
 
 Full reference: `references/posthog-tools.md`.
 
-### GitHub MCP — optional, for issue and PR creation
+### Codebase intelligence — required for implementation workflows
 
-When connected, PostCode can:
-- Read repo structure, recent commits, and open issues
-- Draft GitHub issues pre-filled with PostHog evidence (error ID, stack trace, affected users)
-- Draft PR descriptions that reference the signals that motivated the fix
-- Link PostHog error issues to GitHub issues bidirectionally
+PostCode should inspect source structurally before changing instrumentation, flags, or experiments. PostHog Code's `@posthog/enricher` uses tree-sitter to detect PostHog SDK calls, `capture()` events, feature flag checks, `init()` calls, and variant branches across JavaScript, TypeScript, Python, Go, and Ruby, then enriches those findings with PostHog API context. In AI Agent, replicate that capability by:
+- Using existing repo tooling or AST parsers when available.
+- Falling back to `rg` only as a discovery step, then validating matches in source.
+- Mapping code references to live PostHog flags, experiments, and event definitions before deleting or changing anything.
+- Including instrumentation in the same PR as the feature or fix whenever the user asks to build, scaffold, or ship code.
+
+### External signal sources — optional context
+
+PostHog Code can use more than PostHog analytics: GitHub, Linear, Slack, support tickets, call transcripts, billing, CRM, Sentry, and custom MCP servers can all add context. In PostCode, use these only when connected and relevant. Treat them as supporting evidence; PostHog remains the source of truth for product impact.
 
 ### GitHub MCP — optional, for code execution and issue/PR management
 
@@ -71,7 +78,7 @@ When connected, PostCode can operate across the full GitHub surface — from rea
 - Merge PRs: merge into target branch — **always requires explicit per-merge confirmation, no exceptions**
 - Comment: add comments to issues and PRs with PostHog context
 
-If GitHub MCP is not connected, PostCode delivers issue/PR content as a markdown block to copy-paste.
+If GitHub MCP is not connected, PostCode delivers issue/PR content as a markdown block.
 
 ### Autonomy model — how PostCode decides what to do vs. ask
 
@@ -127,15 +134,17 @@ When connected, PostCode posts incident alerts and health check digests to chann
 Every PostCode workflow follows the same pattern:
 
 ```
-1. DETECT   — read PostHog signals (error, log, metric, replay, flag, experiment)
-2. SCOPE    — how many users affected? since when? which environments?
-3. DIAGNOSE — what's the root cause? correlate with recent deploys, flag changes, experiments
-4. PROPOSE  — what's the fix? roll back, patch, disable flag, ship experiment winner?
-5. EXECUTE  — Level 1: write draft, ask. Level 2: implement task, report. Level 3: implement, report at milestones.
-6. MERGE    — always explicit per-merge confirmation, regardless of autonomy level.
+1. INGEST     — read PostHog signals and any connected support/GitHub/Linear context
+2. SCOPE      — how many users affected? since when? which environments?
+3. ENRICH     — inspect relevant code, flags, events, experiments, deploys, and ownership
+4. DIAGNOSE   — identify root cause or state what remains unknown
+5. PLAN       — choose fix, rollback, rollout, cleanup, instrumentation, or task split
+6. EXECUTE    — Level 1: draft. Level 2: implement this task. Level 3: implement and report at milestones.
+7. VERIFY     — run tests/checks and define the PostHog signal that should change after ship
+8. MERGE      — always explicit per-merge confirmation, regardless of autonomy level
 ```
 
-Never skip steps 3 and 4. Raw error counts without a diagnosis are noise, not signal.
+Never skip enrichment and diagnosis. Raw error counts without code or product context are noise, not signal.
 
 **Reading autonomy from user language:**
 - "What's broken?" / "Show me" / "Draft an issue" → Level 1, ask before acting
@@ -158,6 +167,9 @@ Never skip steps 3 and 4. Raw error counts without a diagnosis are noise, not si
 | "Check our feature flags" | `feature-flag-get-all` + `feature-flags-status-retrieve` |
 | "Audit flags in the codebase" | AST parsing tools + `feature-flag-get-all` |
 | "Scaffold the experiment" | Read workspace code + PostHog flag/experiment status |
+| "Build this with tracking" | Codebase patterns + `read-data-schema` + flag/experiment tools if rollout is needed |
+| "What should we work on" / "signals inbox" | Errors + logs + funnels + experiments + surveys + connected support/backlog context |
+| "Create PR(s) from these signals" | Signal task synthesis + GitHub MCP/CLI workflow |
 | "Is X instrumented correctly" | `read-data-schema` + `execute-sql` spot-check |
 | "Product health check" | Compose: errors + retention + funnels |
 
@@ -198,13 +210,16 @@ Documented in `references/workflows.md`. Current workflows:
 
 | Workflow | Trigger phrases |
 | --- | --- |
+| `signals-inbox-triage` | "what should we work on", "signals inbox", "turn signals into tasks" |
 | `error-triage` | "what's broken", "top errors", "bug report" |
 | `log-investigation` | "check the logs", "what do logs say about X" |
 | `regression-detection` | "did the deploy break anything", "something changed after deploy" |
 | `session-replay-debug` | "watch the session", "show me what the user saw", "replay for this error" |
 | `feature-flag-audit` | "check our flags", "is this flag safe to ship", "flag rollout status" |
 | `ast-flag-detection` | "find flags in the codebase", "audit flags in code" |
+| `auto-instrumentation` | "build with tracking", "add PostHog instrumentation", "instrument this feature" |
 | `code-scaffolding` | "scaffold the experiment", "generate feature flag code" |
+| `signal-to-pr` | "create PR from this signal", "fix it", "open the PR" |
 | `experiment-readout` | "did the experiment win", "is the test ready to ship", "A/B results" |
 | `instrumentation-audit` | "is X tracked", "check our analytics setup", "missing events" |
 | `product-health-check` | "how is the product doing", "error rate", "are users happy" |
@@ -221,6 +236,8 @@ A finished PostCode output must:
 - [ ] State scope: how many users affected, over what time window
 - [ ] Name a root cause (or explicitly say "cause unclear, here's what we know")
 - [ ] Propose a concrete next action
+- [ ] Include instrumentation and rollout considerations for any code change that changes user behavior
+- [ ] Define how to verify after ship: test command plus PostHog signal to monitor
 - [ ] Include a ready-to-use GitHub issue / Linear task draft if relevant and MCP is connected
 - [ ] Never include speculation presented as fact
 
@@ -240,7 +257,7 @@ They are separate skills — install both and use whichever fits the question.
 
 ## Reference files
 
-- `references/posthog-tools.md` — PostHog MCP tools relevant to engineering/product (errors, logs, flags, experiments, replays, SQL)
-- `references/workflows.md` — Step-by-step recipes for the 10 PostCode workflows
+- `references/posthog-tools.md` — PostHog MCP tools plus PostHog Code-style signal and codebase intelligence
+- `references/workflows.md` — Step-by-step recipes for PostCode workflows
 - `references/output-formats.md` — GitHub issue template, PR description template, Linear task template, Slack alert format, markdown report
 - `references/prompting-patterns.md` — How to interpret engineering/product phrasings and route to the right workflow

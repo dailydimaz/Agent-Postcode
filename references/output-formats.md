@@ -46,11 +46,43 @@ Filename: `postcode-<workflow>-<YYYY-MM-DD>.md`
 
 ---
 
+## Signal task brief
+
+Produced by: `signals-inbox-triage`, `signal-to-pr`, and any workflow that turns several signals into one task.
+
+```markdown
+## Task
+[One root-cause-oriented title]
+
+## Evidence
+| Signal | Detail | Source |
+| --- | --- | --- |
+| Error | [ID, users, first/last seen] | PostHog error tracking |
+| Metric | [delta, time window] | PostHog trend/funnel |
+| Replay/support | [session/ticket summary] | [source] |
+
+## Scope
+- Users affected: [N]
+- Time window: [from] -> [to]
+- Product surface: [page/feature/API]
+- Confidence: [High / Medium / Low]
+
+## Recommended action
+[Fix / rollback / instrument / investigate / ship / cleanup]
+
+## PR path
+- Code area: [files/modules likely involved]
+- Instrumentation needed: [events/properties/flags/experiments]
+- Verification: [test command] + [PostHog signal to monitor after ship]
+```
+
+---
+
 ## GitHub issue draft
 
-Produced by: `error-triage`, `regression-detection`, `feature-flag-audit` (stale flags), `experiment-readout` (flag cleanup).
+Produced by: `signals-inbox-triage`, `error-triage`, `regression-detection`, `feature-flag-audit` (stale flags), `experiment-readout` (flag cleanup).
 
-Requires GitHub MCP or delivered as a markdown block to copy-paste.
+Requires GitHub MCP or delivered as a markdown block.
 
 ```markdown
 ## Title
@@ -113,11 +145,15 @@ Produced by: `experiment-readout` (ship winner + flag cleanup), `regression-dete
 ## PostHog impact
 - [ ] Removed feature flag `[flag-key]` (experiment concluded)
 - [ ] Added `posthog.capture()` for [event]
+- [ ] Added/updated event properties: [properties]
+- [ ] Added/updated exception or error context
+- [ ] Added/updated flag or experiment exposure handling
 - [ ] No PostHog changes needed
 
 ## Testing
 - [ ] Tested locally
 - [ ] PostHog error tracking shows no new exceptions on affected flow
+- [ ] Post-ship query/insight to monitor: [link or HogQL]
 - [ ] [Other test criteria]
 
 ## PostHog links
@@ -193,12 +229,14 @@ postcode/<type>/<short-description>
 ```
 
 Types: `fix` (bug fix), `ship` (experiment winner cleanup), `instrument` (add tracking), `cleanup` (stale flags/dead code).
+Use `scaffold` for feature flag/experiment setup and `investigate` when the output is an evidence-gathering PR or task rather than a product behavior fix.
 
 Examples:
 - `postcode/fix/payment-typeerror-847-users`
 - `postcode/ship/checkout-cta-experiment`
 - `postcode/instrument/add-plan-property-to-signup`
 - `postcode/cleanup/remove-stale-dark-mode-flag`
+- `postcode/scaffold/checkout-rollout-flag`
 
 ### Commit message
 

@@ -4,6 +4,28 @@ Each recipe: triggers, inputs needed, steps, synthesis, output.
 
 ---
 
+## signals-inbox-triage
+
+**Triggers:** "what should we work on", "signals inbox", "turn signals into tasks", "prioritize product issues", "find engineering work from PostHog"
+
+**Inputs needed:** time window (default: last 7 days), product area if known, connected context sources (GitHub/Linear/support/Slack/transcripts/billing) if relevant.
+
+**Steps:**
+1. `read-data-schema` + `project-get` → confirm the project and real event names
+2. In parallel where possible: `query-error-tracking-issues-list`, `query-logs`, `query-funnel`/`query-trends`, `experiment-list`, `feature-flag-get-all`, surveys
+3. Pull connected context only when useful: GitHub issues/PRs, Linear backlog, support tickets, Slack incidents, call transcripts, billing/CRM records, Sentry
+4. Cluster related signals into tasks: same page, feature, flag, error type, funnel step, or customer segment
+5. For each task, score impact, urgency, confidence, effort, and suggested owner surface
+
+**Synthesis:**
+- Prefer one task per root cause, not one task per symptom
+- Keep support/backlog context secondary unless PostHog shows product impact
+- Separate "fix now" from "instrument/learn more" when the evidence is weak
+
+**Output:** Ranked signal inbox report. For the top 1-3 tasks: title, evidence, impact, likely root cause, recommended action, GitHub/Linear task draft, and PR path if autonomy was granted.
+
+---
+
 ## error-triage
 
 **Triggers:** "what's broken", "top errors", "bug report", "what errors do we have", "users are complaining"
@@ -107,6 +129,74 @@ Each recipe: triggers, inputs needed, steps, synthesis, output.
 - Experiment flags: do not modify independently of the experiment
 
 **Output:** Flag audit report. Stale flag list (safe to remove). Risk flags (review before changing). Experiment-linked flags (hands off). Cleanup PR description for stale flags if GitHub is connected.
+
+---
+
+## ast-flag-detection
+
+**Triggers:** "find flags in the codebase", "audit flags in code", "which flags are still referenced", "remove stale flags"
+
+**Inputs needed:** codebase path, optional flag key or product area.
+
+**Steps:**
+1. Discover SDK usage with structural tooling when available. If `@posthog/enricher` or a local equivalent exists, prefer it; it detects SDK calls, `capture()` events, `init()` calls, feature flag checks, assignments, and variant branches across JS/TS/Python/Go/Ruby.
+2. If no parser exists, use `rg` to find PostHog SDK imports, `capture`, `getFeatureFlag`, `isFeatureEnabled`, `feature_enabled`, `posthog`, and local wrapper names, then inspect matches manually.
+3. `feature-flag-get-all` + `experiment-list` → map code references to live flags and experiments.
+4. Classify each flag: active rollout, experiment-owned, fully rolled out/stale, unknown in PostHog, dead code candidate.
+5. For stale flags, inspect variant branches and tests before proposing removal.
+
+**Synthesis:**
+- Never delete a flag because text search missed it; validate references and rollout state
+- Do not manually change experiment-owned flags outside the experiment workflow
+- For unknown flags, distinguish "code references missing PostHog flag" from "dynamic flag key can't be resolved"
+
+**Output:** Code flag map with file/line references, PostHog status, staleness classification, cleanup risk, and PR plan for safe removals.
+
+---
+
+## auto-instrumentation
+
+**Triggers:** "build this with tracking", "add PostHog instrumentation", "instrument this feature", "track this event", "make sure analytics is included"
+
+**Inputs needed:** feature or user flow, expected success/failure events, rollout needs, privacy constraints.
+
+**Steps:**
+1. `read-data-schema` → learn existing event naming, property conventions, and identity/group usage
+2. Inspect current SDK initialization and wrapper utilities in the codebase
+3. Check feature flags/experiments if the change is gated or A/B tested
+4. Implement the product change and instrumentation together: capture success/failure events, relevant properties, exception context, and flag/variant exposure where appropriate
+5. Add or update tests for the behavior and tracking calls
+6. Define the PostHog verification query: event count, property shape, error rate, or funnel step after deploy
+
+**Synthesis:**
+- Reuse local analytics wrappers and event naming conventions
+- Avoid collecting secrets, PII, or high-cardinality blobs
+- Prefer stable property names over dumping component state
+
+**Output:** Implementation/PR summary with event names, properties, flag/experiment keys, tests run, and the PostHog query to verify after ship.
+
+---
+
+## code-scaffolding
+
+**Triggers:** "scaffold the experiment", "generate feature flag code", "add rollout code", "set up the A/B test"
+
+**Inputs needed:** feature name, flag key or experiment name, variants, target audience, success metric.
+
+**Steps:**
+1. Inspect existing feature flag and experiment patterns in the repo
+2. `feature-flag-get-definition` or `feature-flag-get-all` → confirm flag shape, rollout, variants
+3. `experiment-get` if tied to an existing experiment; otherwise draft the experiment/flag config before code
+4. Add the flag/variant branch in code with a safe fallback
+5. Add exposure and success/failure instrumentation using existing analytics wrappers
+6. Update tests and PR description with rollout and cleanup plan
+
+**Synthesis:**
+- Feature flag code must fail closed or preserve the current experience
+- Multivariate experiments need explicit variant handling and a default branch
+- Every scaffolded experiment should include a future cleanup note
+
+**Output:** Code change or PR draft with flag key, variant behavior, instrumentation, tests, rollout plan, and cleanup criteria.
 
 ---
 
@@ -225,3 +315,48 @@ Each recipe: triggers, inputs needed, steps, synthesis, output.
 **Verdict:** GREEN (clean deploy) / AMBER (minor issues, monitor) / RED (regression, consider rollback).
 
 **Output:** Deploy impact report. Verdict with evidence. New error list if any. Metric delta table. Recommended next action.
+
+---
+
+## signal-to-pr
+
+**Triggers:** "fix it", "create a PR from this signal", "open the PR", "handle this bug", "implement the fix"
+
+**Inputs needed:** a scoped signal or task, target repo/branch, autonomy level, expected verification.
+
+**Steps:**
+1. Confirm the signal evidence: error issue, log spike, funnel drop, experiment readout, or instrumentation gap
+2. Inspect the relevant code path and recent changes
+3. Create a branch using the output-format branch naming convention if writing is authorized
+4. Implement the smallest fix that addresses the diagnosed root cause; include instrumentation when behavior changes
+5. Run focused tests/checks and, where possible, add or update tests
+6. Commit with the PostHog signal reference and open/draft a PR with evidence, scope, verification, and follow-up monitoring
+
+**Synthesis:**
+- Do not turn a vague error list into a broad PR; split into one PR per root cause
+- If the cause remains unclear, open an investigation task instead of guessing in code
+- Protected-branch merges always require explicit per-merge confirmation
+
+**Output:** PR or PR draft with PostHog evidence, files changed, tests run, rollout/instrumentation notes, and post-ship signal to monitor.
+
+---
+
+## stacked-prs
+
+**Triggers:** "create a stacked PR", "split this into stacked PRs", "manage branches for this fix", "ship this in layers"
+
+**Inputs needed:** target base branch, desired split, dependency order, verification for each layer.
+
+**Steps:**
+1. Split the work by independently reviewable behavior: instrumentation/schema first, feature flag scaffolding second, behavior change third, cleanup last
+2. Use the repo's established Git workflow (`git`, `jj`, or local scripts) without rewriting unrelated user changes
+3. Each stack layer gets its own PostHog signal reference, tests, and PR description
+4. Link dependent PRs and state the merge order
+5. Re-run checks after rebases/restacks
+
+**Synthesis:**
+- Stacks are for reducing review risk, not hiding uncertainty
+- Keep each PR deployable or clearly gated behind a flag
+- Cleanup PRs should only follow after the experiment/rollout signal is conclusive
+
+**Output:** Stack plan or opened PR stack: branch names, dependency order, evidence per PR, tests, and merge confirmation boundary.

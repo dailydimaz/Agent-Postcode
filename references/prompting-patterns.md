@@ -52,6 +52,19 @@ It does not merge on general autonomy. It waits.
 
 ---
 
+## "What should we work on" patterns → signals-inbox-triage
+
+| Phrase | Route |
+| --- | --- |
+| "What should we work on", "signals inbox", "prioritize issues" | `signals-inbox-triage` |
+| "Turn PostHog signals into tasks" | `signals-inbox-triage` + GitHub/Linear draft |
+| "Find high-impact bugs from product data" | `signals-inbox-triage` → `error-triage` for the top task |
+| "Create PRs from these signals" | `signals-inbox-triage` first, then `signal-to-pr` for scoped tasks |
+
+**Important:** cluster symptoms into root-cause tasks. Do not create one issue per log line, support ticket, or error event.
+
+---
+
 ## "What do the logs say" patterns → log-investigation
 
 | Phrase | Route |
@@ -99,6 +112,32 @@ It does not merge on general autonomy. It waits.
 
 ---
 
+## "Audit flags in code" patterns → ast-flag-detection
+
+| Phrase | Route |
+| --- | --- |
+| "Find flags in the codebase", "audit flags in code" | `ast-flag-detection` |
+| "Which flags are stale in code" | `ast-flag-detection` + `feature-flag-audit` |
+| "Remove stale flags" | `ast-flag-detection`, then `signal-to-pr` if authorized |
+| "Is this flag still referenced" | `ast-flag-detection` scoped to one flag |
+
+**Important:** text search is a discovery step only. Validate wrappers, dynamic keys, variant branches, and experiment ownership before recommending removal.
+
+---
+
+## "Build with tracking" patterns → auto-instrumentation or code-scaffolding
+
+| Phrase | Route |
+| --- | --- |
+| "Build this with tracking", "add analytics", "instrument this feature" | `auto-instrumentation` |
+| "Track [event]" | `auto-instrumentation` scoped to that event |
+| "Scaffold the experiment", "generate feature flag code" | `code-scaffolding` |
+| "Add a rollout flag" | `code-scaffolding` |
+
+**Important:** always read the existing event schema and local analytics wrappers before inventing event names or properties.
+
+---
+
 ## "Did the experiment win" patterns → experiment-readout
 
 | Phrase | Route |
@@ -132,6 +171,19 @@ It does not merge on general autonomy. It waits.
 
 ---
 
+## "Fix/open the PR" patterns → signal-to-pr or stacked-prs
+
+| Phrase | Route |
+| --- | --- |
+| "Fix it", "handle this bug", "implement the fix" | `signal-to-pr` for the scoped task |
+| "Create/open the PR" | `signal-to-pr` if the signal is already scoped |
+| "Create a stacked PR", "split this into layers" | `stacked-prs` |
+| "Fix the top 3 issues" | `signals-inbox-triage`, then one `signal-to-pr` per root cause |
+
+**Important:** task autonomy does not imply merge autonomy. Protected-branch merge still needs the explicit merge confirmation prompt.
+
+---
+
 ## Disambiguation: when a phrase could be AHHOG or PostCode
 
 Some phrases could go to either Agent AHHOG (marketing) or PostCode (engineering/product). Route based on the underlying intent:
@@ -153,13 +205,15 @@ Some phrases could go to either Agent AHHOG (marketing) or PostCode (engineering
 
 ## Phrases that need push-back
 
-**"Automatically fix the bug"** — PostCode can diagnose and draft a PR description, but it doesn't write and push code. Say: "I can write the GitHub issue and PR description with all the evidence — you or your team would implement and review it. Want me to draft those?"
+**"Automatically fix all bugs"** — scope first. Run `signals-inbox-triage` or `error-triage`, choose the highest-impact root cause, then execute only the task covered by the user's autonomy grant.
 
 **"Delete this error from PostHog"** — PostCode doesn't delete. It can mark an error as `resolved` (Tier 2) once it's fixed, or explain how to suppress/delete it in the PostHog UI.
 
 **"Ship the experiment without checking results"** — Always run `experiment-results-get` first. Even a 30-second check. Non-negotiable.
 
 **"Turn off all feature flags"** — This is a high-blast-radius action. Run `feature-flag-get-all` + `feature-flags-user-blast-radius-create` for each, present the impact, then let the user decide which to disable one by one.
+
+**"Instrument everything"** — ask for the product surface or start with a schema/code audit. Broad instrumentation without event ownership creates noisy analytics and privacy risk.
 
 ---
 

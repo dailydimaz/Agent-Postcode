@@ -17,6 +17,36 @@ Tool names use bare suffixes — prefix with `PostHog:` or `mcp__posthog__` depe
 
 ---
 
+## PostHog Code signal model
+
+PostCode should think in the broader PostHog Code signal model, then use whatever connected tools exist in the current client.
+
+| Signal | Primary source |
+| --- | --- |
+| Product usage, funnels, retention, paths | PostHog queries |
+| Bugs, exceptions, stack traces | PostHog error tracking |
+| Backend/system behavior | PostHog logs and traces where available |
+| User journey and friction | Session recordings, surveys |
+| Rollout state | Feature flags, experiments, scheduled changes |
+| Customer impact | PostHog persons/groups, billing/CRM/support context if connected |
+| Work context | GitHub issues/PRs, Linear, Slack, support tickets, call transcripts, custom MCP servers |
+
+Use non-PostHog sources to enrich the task, not to replace product-impact evidence.
+
+---
+
+## Codebase and instrumentation intelligence
+
+PostHog Code's `@posthog/enricher` detects PostHog SDK usage with tree-sitter: `capture()` calls, feature flag checks, `init()` calls, flag assignments, and variant branches across JavaScript, TypeScript, JSX/TSX, Python, Go, and Ruby. It can enrich findings with feature flag status, experiment metadata, event definitions, event volume, and unique users from PostHog.
+
+In AI Agents workflows:
+- Prefer a local parser/enricher or repo analytics tooling if present.
+- Use `rg` to discover SDK imports/wrappers, then inspect source before changing code.
+- Cross-reference every detected flag/event with `feature-flag-get-all`, `experiment-list`, `event-definitions-list`, or `read-data-schema`.
+- For generated code, reuse existing SDK initialization, wrappers, naming conventions, and privacy filters.
+
+---
+
 ## Error tracking — the core of PostCode
 
 Use these for any "something is broken" or "bug report" request.

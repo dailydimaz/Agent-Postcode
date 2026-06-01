@@ -1,21 +1,23 @@
-# Agent PostCode — Claude Code Skill
+# Agent PostCode — Skill
 
-A Claude Code skill inspired by [PostHog Code](https://posthog.com/code) — an AI agent that reads production signals from PostHog and turns them into engineering and product decisions: error diagnoses, experiment readouts, feature flag audits, session replay analysis, instrumentation checks, and GitHub issue / PR drafts.
+A skill inspired by [PostHog Code](https://posthog.com/code) and [PostHog/code](https://github.com/PostHog/code) — a product-aware AI devtool that turns production signals into engineering tasks, PRs, instrumentation, rollout decisions, and product fixes.
 
-**Name:** Post**Hog** + Claude **Code** → **PostCode**
+**Name:** Post**Hog** + **Code** → **PostCode**
 
 ## What it does
 
 PostCode connects PostHog production data to action:
 
-- **Error triage** — find the top errors by user impact, get stack traces and session context, create the GitHub issue (or draft to copy-paste)
+- **Signals inbox triage** — cluster errors, logs, funnels, surveys, experiments, flags, support/backlog context, and product usage into ranked engineering tasks
+- **Error triage** — find the top errors by user impact, get stack traces and session context, create the GitHub issue or draft
 - **Regression detection** — correlate a deploy with error spikes and metric drops, fast
 - **Session replay debug** — find and summarize sessions where errors or friction occurred
 - **Experiment readout** — read A/B results, apply a ship checklist, execute flag-cleanup PR when you say "go"
 - **Feature flag audit** — find stale flags, check health, assess blast radius before changes
-- **AST-level flag detection** — parse your codebase across multiple languages to map active flags and detect stale ones
-- **Code scaffolding** — automatically generate code for feature flags, A/B tests, and analytics tracking directly into the codebase
-- **Instrumentation audit** — discover missing events, generate the `posthog.capture()` calls, commit them
+- **AST-level PostHog detection** — parse SDK usage, `capture()` calls, feature flags, `init()` calls, and variant branches across JS/TS/Python/Go/Ruby patterns
+- **Code scaffolding** — generate feature flag, experiment, rollout, and analytics tracking code directly into the codebase
+- **Auto-instrumentation** — add the `posthog.capture()` calls, properties, error context, and exposure tracking needed for new work
+- **Signal-to-PR execution** — turn a scoped signal into a branch, commit, and PR when autonomy is granted
 - **Log investigation** — query and correlate backend logs with errors and deployments
 - **Product health check** — composite error + engagement + retention status, weekly or on-demand
 - **Incident response** — fast path for P0s: what broke, how many users, likely cause, Slack alert
@@ -35,14 +37,14 @@ They compose: AHHOG finds a page with bad conversion → PostCode checks if a JS
 
 ## Prerequisites
 
-1. **Claude Code** installed
-2. **PostHog MCP** — required:
+1. **Whatever AI** with skills enabled
+2. **PostHog MCP** — required in your coding-agent client. Claude Code example:
    ```bash
    claude mcp add --transport http posthog https://mcp.posthog.com/mcp
    ```
    Guide: https://posthog.com/docs/model-context-protocol
 
-3. **GitHub MCP** — optional, untuk code execution (branch, commit, PR, merge):
+3. **GitHub access** — optional, for code execution and issue/PR management:
    ```bash
    claude mcp add github
    ```
@@ -51,16 +53,18 @@ They compose: AHHOG finds a page with bad conversion → PostCode checks if a JS
 
 5. **Slack MCP** — optional, for incident alerts and digests
 
+6. **Other signal connectors** — optional, for support tickets, transcripts, billing/CRM, Sentry, or custom MCP context
+
 ## Installing
 
 ```bash
 unzip agent-postcode.zip
-cp -r agent-postcode/ ~/.claude/skills/        # user-level
+cp -r agent-postcode/ ~/.claude/skills/         # user-level Claude
 # or
-cp -r agent-postcode/ .claude/skills/          # project-level
+cp -r agent-postcode/ <project-skill-dir>/     # project-level if your client supports it
 ```
 
-Restart Claude Code.
+Restart Claude.
 
 ## Using it
 
@@ -74,6 +78,8 @@ Restart Claude Code.
 "Audit our feature flags — which ones are stale?"
 "Parse the codebase and find any feature flags that are no longer active in PostHog"
 "Scaffold the new checkout experiment in the codebase"
+"Build the plan upgrade flow and instrument the conversion events"
+"Turn the signal inbox into GitHub issues and PRs"
 "Create a stacked PR for this fix"
 "Is our signup event capturing the plan property correctly?"
 "Run a product health check"
@@ -108,12 +114,12 @@ agent-postcode/
 ├── SKILL.md                          # Main skill instructions
 ├── README.md                         # This file
 └── references/
-    ├── posthog-tools.md              # PostHog MCP tools for engineering/product
-    ├── workflows.md                  # 10 workflow recipes
+    ├── posthog-tools.md              # PostHog MCP tools plus signal/codebase intelligence
+    ├── workflows.md                  # Signal, triage, instrumentation, rollout, and PR recipes
     ├── output-formats.md             # GitHub issue, PR, Linear, Slack, markdown templates
     └── prompting-patterns.md         # How to interpret engineering/product phrasings
 ```
 
 ## Acknowledgements
 
-Inspired by [PostHog Code](https://posthog.com/code) by PostHog. Uses the official [PostHog MCP server](https://posthog.com/docs/model-context-protocol). Not affiliated with PostHog or Anthropic.
+Inspired by [PostHog Code](https://posthog.com/code) by PostHog. Uses the official [PostHog MCP server](https://posthog.com/docs/model-context-protocol). Not affiliated with PostHog.
