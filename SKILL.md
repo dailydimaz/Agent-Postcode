@@ -15,7 +15,7 @@ PostHog Code ([posthog.com/code](https://posthog.com/code), [github.com/PostHog/
 | | Agent AHHOG | Agent PostCode |
 | --- | --- | --- |
 | Primary question | Is our acquisition/conversion working? | Is our product/code working? |
-| Main data | Ahrefs (SEO) + PostHog (behavior) | PostHog signals: usage, logs, errors, replays, traces, payments, funnels, flags, experiments, support/backlog context |
+| Main data | Ahrefs (SEO) + PostHog (behavior) | PostHog signals: usage, logs, errors, replays, traces, payments, funnels, flags, experiments, Scouts, support/backlog context |
 | Output | Marketing reports, SEO audits | Signal-backed tasks, bug fixes, issue/PR drafts, rollout decisions, instrumentation changes |
 | Audience | Marketing, growth | Engineering, product, founders |
 
@@ -63,7 +63,7 @@ PostCode should inspect source structurally before changing instrumentation, fla
 
 ### External signal sources — optional context
 
-PostHog Code can use more than PostHog analytics: GitHub, Linear, Slack, support tickets, call transcripts, billing, CRM, Sentry, and custom MCP servers can all add context. In PostCode, use these only when connected and relevant. Treat them as supporting evidence; PostHog remains the source of truth for product impact.
+PostHog Code can use more than PostHog analytics: GitHub, Linear, Slack, support tickets, call transcripts, billing, CRM, Sentry, Scouts, and custom MCP servers can all add context. In PostCode, use these only when connected and relevant. Treat them as supporting evidence; PostHog remains the source of truth for product impact.
 
 ### GitHub MCP — optional, for code execution and issue/PR management
 
@@ -110,7 +110,7 @@ When connected, PostCode creates and updates Linear issues from PostHog signals 
 
 When connected, PostCode posts incident alerts and health check digests to channels.
 
-- Always confirm channel on first post in a session
+- Use the default team channel for signals notifications if configured, otherwise always confirm channel on first post in a session
 - Under session autonomy (Level 3), posts follow-up alerts to the same channel without re-confirming
 
 ---

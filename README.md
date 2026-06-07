@@ -8,7 +8,7 @@ A skill inspired by [PostHog Code](https://posthog.com/code) and [PostHog/code](
 
 PostCode connects PostHog production data to action:
 
-- **Signals inbox triage** — cluster errors, logs, funnels, surveys, experiments, flags, support/backlog context, and product usage into ranked engineering tasks
+- **Signals inbox triage** — cluster errors, logs, funnels, surveys, experiments, flags, Scouts, support/backlog context, and product usage into ranked engineering tasks
 - **Error triage** — find the top errors by user impact, get stack traces and session context, create the GitHub issue or draft
 - **Regression detection** — correlate a deploy with error spikes and metric drops, fast
 - **Session replay debug** — find and summarize sessions where errors or friction occurred
@@ -53,7 +53,7 @@ They compose: AHHOG finds a page with bad conversion → PostCode checks if a JS
 
 5. **Slack MCP** — optional, for incident alerts and digests
 
-6. **Other signal connectors** — optional, for support tickets, transcripts, billing/CRM, Sentry, or custom MCP context
+6. **Other signal connectors** — optional, for support tickets, transcripts, billing/CRM, Sentry, Scouts, or custom MCP context
 
 ## Installing
 

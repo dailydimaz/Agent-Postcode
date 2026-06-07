@@ -29,7 +29,7 @@ PostCode should think in the broader PostHog Code signal model, then use whateve
 | User journey and friction | Session recordings, surveys |
 | Rollout state | Feature flags, experiments, scheduled changes |
 | Customer impact | PostHog persons/groups, billing/CRM/support context if connected |
-| Work context | GitHub issues/PRs, Linear, Slack, support tickets, call transcripts, custom MCP servers |
+| Work context | GitHub issues/PRs, Linear, Slack, support tickets, call transcripts, Scouts, custom MCP servers |
 
 Use non-PostHog sources to enrich the task, not to replace product-impact evidence.
 
