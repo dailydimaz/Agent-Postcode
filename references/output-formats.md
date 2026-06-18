@@ -160,6 +160,7 @@ Produced by: `experiment-readout` (ship winner + flag cleanup), `regression-dete
 - Experiment: [link]
 - Error issue: [link]
 - Session replay: [link]
+- Slack thread: [link, if PR originated from Slack signal]
 ```
 
 ---
@@ -202,6 +203,8 @@ Always confirm channel before posting.
 *Immediate action:* [roll back flag X / deploy hotfix / disable feature Y]
 
 PostHog: [link] | Full report: [filename]
+
+💡 _Fix path available — reply "fix it" to create a PR, or "draft issue" for a GitHub issue._
 ```
 
 **Health check digest:**
@@ -214,6 +217,13 @@ PostHog: [link] | Full report: [filename]
 
 Top concern: [1 sentence]
 Full report: [filename]
+```
+
+**PR nudge rule:** When the signal points to a code-fixable issue (clear stack trace, identified regression, known flag misconfiguration), append a fix prompt. Do not nudge for UX/product issues that need design, not code.
+
+**Slack thread context:** When a PR is created from a Slack-surfaced signal, include the Slack thread link in the PR description footer:
+```
+Slack thread: [link to originating thread]
 ```
 
 ---
@@ -263,7 +273,7 @@ Affected: 847 users, 1,203 sessions (last 7 days)
 ### PR execution checklist
 
 Before opening a PR, PostCode verifies:
-- [ ] Branch created from the correct base (main or as user specifies)
+- [ ] Branch created from the correct base (project's configured base branch, or as user specifies — not always `main`)
 - [ ] Changes are minimal and scoped to the diagnosed issue
 - [ ] Commit message includes PostHog signal reference
 - [ ] PR description includes: signal, scope, fix summary, how to verify

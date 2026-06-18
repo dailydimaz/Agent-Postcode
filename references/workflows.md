@@ -13,7 +13,7 @@ Each recipe: triggers, inputs needed, steps, synthesis, output.
 **Steps:**
 1. `read-data-schema` + `project-get` → confirm the project and real event names
 2. In parallel where possible: `query-error-tracking-issues-list`, `query-logs`, `query-funnel`/`query-trends`, `experiment-list`, `feature-flag-get-all`, surveys
-3. Pull connected context only when useful: GitHub issues/PRs, Linear backlog, support tickets, Slack incidents, call transcripts, billing/CRM records, Sentry
+3. Pull connected context only when useful: GitHub issues/PRs, Linear backlog, support tickets, Slack incidents, call transcripts, billing/CRM records, Sentry, **Scout findings** (check inbox reports for linked scout results — these are pre-analyzed signals with higher confidence)
 4. Cluster related signals into tasks: same page, feature, flag, error type, funnel step, or customer segment
 5. For each task, score impact, urgency, confidence, effort, and suggested owner surface
 
@@ -292,6 +292,10 @@ Each recipe: triggers, inputs needed, steps, synthesis, output.
 
 **Output:** Incident brief (< 5 bullets). Likely cause. Immediate recommendation (roll back flag? deploy hotfix? disable feature?). Slack alert draft if Slack MCP connected.
 
+**Steer/queue during incidents:**
+- During incident response, steer messages take priority — the user may have new information about the incident
+- Queue messages during incidents should be processed only after the incident brief is delivered
+
 ---
 
 ## deploy-impact
@@ -327,7 +331,7 @@ Each recipe: triggers, inputs needed, steps, synthesis, output.
 **Steps:**
 1. Confirm the signal evidence: error issue, log spike, funnel drop, experiment readout, or instrumentation gap
 2. Inspect the relevant code path and recent changes
-3. Create a branch using the output-format branch naming convention if writing is authorized
+3. Create a branch using the output-format branch naming convention if writing is authorized. Use the project's configured base branch (which may differ from `main` — PostHog Code now supports configurable base branches for auto-PRs).
 4. Implement the smallest fix that addresses the diagnosed root cause; include instrumentation when behavior changes
 5. Run focused tests/checks and, where possible, add or update tests
 6. Commit with the PostHog signal reference and open/draft a PR with evidence, scope, verification, and follow-up monitoring
@@ -338,6 +342,10 @@ Each recipe: triggers, inputs needed, steps, synthesis, output.
 - Protected-branch merges always require explicit per-merge confirmation
 
 **Output:** PR or PR draft with PostHog evidence, files changed, tests run, rollout/instrumentation notes, and post-ship signal to monitor.
+
+**Steer/queue during implementation:**
+- If a steer message arrives during implementation, save progress (commit WIP if possible), acknowledge, and pivot
+- If a queue message arrives, acknowledge and process it after PR is opened/drafted
 
 ---
 

@@ -30,8 +30,16 @@ PostCode should think in the broader PostHog Code signal model, then use whateve
 | Rollout state | Feature flags, experiments, scheduled changes |
 | Customer impact | PostHog persons/groups, billing/CRM/support context if connected |
 | Work context | GitHub issues/PRs, Linear, Slack, support tickets, call transcripts, Scouts, custom MCP servers |
+| AI observability | LLM/agent traces, token usage, model performance | PostHog AI observability (formerly "LLM analytics") |
 
 Use non-PostHog sources to enrich the task, not to replace product-impact evidence.
+
+**Scouts signal model:** Scouts are recurring agent-driven scans that produce findings linked to inbox reports. They run with a configurable window (up to 3 days), and each finding can be discussed, shared via deep link, or filed as a task. When available, treat Scout findings as high-confidence proactive signals — they've already been analyzed by an agent.
+
+> [!NOTE]
+> **Billing:** Scouts and signal-report tasks bill to PostHog's "signals" product. Be mindful of quota when running broad signal scans or recurring scout queries.
+
+**Signals Inbox** is now generally available (no longer behind a scale-gated rollout). All PostHog Code users can access the signals inbox, which means PostCode's `signals-inbox-triage` workflow maps directly to a first-class product feature. Inbox auto-PRs support configurable base branches.
 
 ---
 
@@ -275,3 +283,16 @@ FROM events
 WHERE timestamp > '2026-05-01'
 AND distinct_id IN (SELECT distinct_id FROM events WHERE event = 'step_1' AND timestamp > '2026-05-01')
 ```
+
+---
+
+## PostHog Code agent compatibility notes
+
+When PostCode runs inside PostHog Code's cloud agent environment:
+
+- **Reasoning effort:** Cloud Claude sessions now correctly send the selected reasoning effort level regardless of whether plugins are enabled (fixed in PostHog Code #2722). No special handling needed.
+- **Codex instructions:** PostHog's guidance is now passed via `developer_instructions` (appending to Codex's base prompt) rather than `instructions` (which replaced it). PostCode's context is additive, not destructive, when running under Codex (#2721).
+- **MCP reconnection:** Signed-commit and in-process MCP servers now automatically reconnect after session refresh (#2724, #2549). PostCode workflows spanning long sessions should no longer lose MCP connectivity.
+- **Model persistence:** Selected model preferences now persist across sessions (#2690, #2620). PostCode users who prefer a specific model won't need to re-select it.
+- **Model support:** PostHog Code now supports Claude Fable 5 (#2554) and Extra High reasoning for GPT-5.5 (#2658). PostCode works with any supported model.
+- **Claude adapter:** Synced with upstream Claude v0.42.0 and v0.44.0 (#2513, #2593).

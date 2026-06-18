@@ -57,14 +57,29 @@ They compose: AHHOG finds a page with bad conversion → PostCode checks if a JS
 
 ## Installing
 
+### PostHog Code (recommended)
+PostCode works as a native PostHog Code skill:
+
 ```bash
-unzip agent-postcode.zip
-cp -r agent-postcode/ ~/.claude/skills/         # user-level Claude
-# or
-cp -r agent-postcode/ <project-skill-dir>/     # project-level if your client supports it
+# User-level (available in all projects)
+cp -r agent-postcode/ ~/.posthog-code/skills/
+
+# Repo-level (shared with team via git)
+cp -r agent-postcode/ .posthog-code/skills/
+
+# Or install from skills.sh marketplace (if published)
+# Browse: skills.sh
 ```
 
-Restart Claude.
+### Claude Code (legacy)
+```bash
+cp -r agent-postcode/ ~/.claude/skills/
+```
+
+### Other AI agents
+Copy the skill directory into your agent's skill/plugin path. PostCode's `SKILL.md` is the entry point.
+
+Restart your agent after installing.
 
 ## Using it
 

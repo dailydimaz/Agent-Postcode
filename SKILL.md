@@ -10,6 +10,20 @@ Agent PostCode turns PostHog production signals into engineering and product wor
 **The PostHog Code vision, adapted for AI Agents:**
 PostHog Code ([posthog.com/code](https://posthog.com/code), [github.com/PostHog/code](https://github.com/PostHog/code)) is PostHog's product-aware AI devtool: it turns production signals into tasks, triages bugs and errors, creates pull requests, coordinates coding agents, and automatically adds PostHog instrumentation for new work. PostCode adapts that loop inside AI Agents: read product signals, enrich them with code context, decide the next engineering action, implement when authorized, and keep the human review boundary clear.
 
+### Skills ecosystem
+
+PostHog Code now has a full skills system. Skills are structured directories with a `SKILL.md` and optional reference files. PostCode is one such skill. Key capabilities:
+
+- **User skills** — installed per-user, available across all projects
+- **Repo skills** — committed to a repo, shared with the team
+- **Team skills** — published to the PostHog cloud org, installable by teammates
+- **Marketplace** — `skills.sh` for browsing and installing community skills
+- **Codex unification** — skills work across Claude, Codex, and other backends
+- **Live refresh** — skill changes on disk take effect immediately, no restart needed
+- **Validation** — PostHog Code validates skill structure and warns about shadowing (multiple skills with the same name)
+
+PostCode is designed as a portable skill directory. It works whether installed as a user skill, repo skill, or team skill.
+
 **The key difference from Agent AHHOG:**
 
 | | Agent AHHOG | Agent PostCode |
@@ -60,10 +74,15 @@ PostCode should inspect source structurally before changing instrumentation, fla
 - Falling back to `rg` only as a discovery step, then validating matches in source.
 - Mapping code references to live PostHog flags, experiments, and event definitions before deleting or changing anything.
 - Including instrumentation in the same PR as the feature or fix whenever the user asks to build, scaffold, or ship code.
+- **Channel CONTEXT.md:** PostHog Code now generates per-channel `CONTEXT.md` files that are automatically injected into agent task prompts. When PostCode runs inside a Channel context, it should respect and build upon the channel's context rather than starting from scratch. This provides project-specific background (tech stack, conventions, key files) without the user needing to repeat it.
 
 ### External signal sources — optional context
 
 PostHog Code can use more than PostHog analytics: GitHub, Linear, Slack, support tickets, call transcripts, billing, CRM, Sentry, Scouts, and custom MCP servers can all add context. In PostCode, use these only when connected and relevant. Treat them as supporting evidence; PostHog remains the source of truth for product impact.
+
+**Scouts** are now a first-class signal source in PostHog Code. They run on a fleet-managed schedule (configurable, up to 3-day windows), produce findings linked to inbox reports, and support per-finding deep links and discussion threads. When PostCode runs `signals-inbox-triage`, it should pull Scout findings alongside errors, logs, and funnels — Scouts provide the proactive, recurring signal layer that complements reactive error tracking.
+
+**Billing note:** Scouts and signal-report tasks bill to the PostHog "signals" product. When using Scouts-enriched workflows (e.g., `signals-inbox-triage`), the user should be aware that these calls count toward their signals quota.
 
 ### GitHub MCP — optional, for code execution and issue/PR management
 
@@ -93,6 +112,18 @@ The user says "fix it", "just do it", "go ahead", "handle this", "implement the 
 **Level 3 — Session autonomy (session-wide grant)**
 The user says "you have full autonomy", "handle everything", "work autonomously", "don't ask me for each step" at the session level. PostCode executes all tasks in the session without asking per-step — creates branches, commits, opens PRs, creates Linear issues, posts to Slack. Reports at milestones. **Merge to protected branches still requires explicit per-merge confirmation.** The user can revoke at any time ("stop, ask me before doing anything else").
 
+### Steer and queue — mid-task communication
+
+PostHog Code supports two messaging modes during agent sessions:
+
+- **Steer:** the user sends a message that redirects the current task immediately. PostCode pauses, acknowledges, and pivots. Example: "actually focus on the payment error first" while PostCode is triaging a different error.
+- **Queue:** the user queues a message for after the current task completes. PostCode finishes its current step, then processes the queued message. Example: "after this, also check the logs" while PostCode is running `error-triage`.
+
+**How PostCode handles each mode:**
+- **Steer:** treat as a new instruction at the current autonomy level. If it conflicts with the active task, acknowledge and pivot. Never silently ignore a steer.
+- **Queue:** acknowledge receipt ("Queued — I'll handle that after this task"), continue current work, then process the queued item using the same autonomy level.
+- Under **Level 3 (session autonomy):** process queued items automatically at milestones without re-confirming, but always report what was queued and when it was handled.
+
 **The one thing that never changes regardless of autonomy level:**
 Merging a PR to a protected branch (main, master, production, release) always requires the user to say "yes, merge it" at that specific moment. No autonomy grant covers this. The blast radius of a bad merge is too high, and unlike most actions it cannot be reversed instantly.
 
@@ -112,6 +143,10 @@ When connected, PostCode posts incident alerts and health check digests to chann
 
 - Use the default team channel for signals notifications if configured, otherwise always confirm channel on first post in a session
 - Under session autonomy (Level 3), posts follow-up alerts to the same channel without re-confirming
+- **Concise Slack responses:** When PostCode's response originates from a Slack mention or Slack-bound task, keep responses short and actionable — Slack is not the place for full markdown reports. Link to the full report instead.
+- **Mention tokens:** Echo labeled mention tokens in responses so Slack users can see who/what was referenced. Only @mention specific team members when the signal has high confidence and clear ownership.
+- **PR nudge:** When posting about code-fixable issues (errors with clear stack traces, regressions with identified causes), nudge toward creating a PR: include a "Fix available — say 'fix it' or 'create PR'" prompt.
+- **PR footer links:** Agent-created PRs now include Slack thread links and "why" context in their footer. PostCode should include the originating Slack thread link when creating PRs from Slack-surfaced signals.
 
 ---
 
@@ -139,7 +174,7 @@ Every PostCode workflow follows the same pattern:
 3. ENRICH     — inspect relevant code, flags, events, experiments, deploys, and ownership
 4. DIAGNOSE   — identify root cause or state what remains unknown
 5. PLAN       — choose fix, rollback, rollout, cleanup, instrumentation, or task split
-6. EXECUTE    — Level 1: draft. Level 2: implement this task. Level 3: implement and report at milestones.
+6. EXECUTE    — Level 1: draft. Level 2: implement this task. Level 3: implement and report at milestones. At any level, respond to steer messages immediately and process queued messages at the next milestone.
 7. VERIFY     — run tests/checks and define the PostHog signal that should change after ship
 8. MERGE      — always explicit per-merge confirmation, regardless of autonomy level
 ```

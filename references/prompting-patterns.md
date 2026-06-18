@@ -37,6 +37,17 @@ It does not merge on general autonomy. It waits.
 - "Just handle this" for a task that spans multiple PRs → treat as Level 2 per PR, not a blanket session grant
 - "Do whatever you think is best" → Level 2 for the current task, not Level 3
 
+### Steer and queue detection
+
+Users may send messages while PostCode is mid-task. Detect the mode:
+
+| Phrase pattern | Mode | PostCode behavior |
+| --- | --- | --- |
+| "Actually, focus on X instead", "Stop that, do Y", "Switch to..." | **Steer** | Pause current task, pivot to new instruction |
+| "After this, also...", "When you're done, check...", "Queue this: ..." | **Queue** | Acknowledge, finish current task, then handle |
+| "Also do X" (while mid-task, no urgency) | **Queue** (default) | Treat as queued unless urgency is clear |
+| "Wait, X is more urgent" | **Steer** | The word "wait" or urgency markers signal a steer |
+
 ---
 
 
